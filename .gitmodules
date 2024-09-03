@@ -1,0 +1,3 @@
+[submodule "WorldWire"]
+	path = WorldWire
+	url = https://github.com/AdamGr2002/WorldWire.git
