@@ -1,0 +1,21 @@
+{
+    "name": "Guardian News PWA",
+    "short_name": "News PWA",
+    "description": "Stay updated with the latest news from The Guardian",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [
+      {
+        "src": "/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }

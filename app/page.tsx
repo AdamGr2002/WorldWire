@@ -1,113 +1,180 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect, useCallback, SetStateAction, ReactNode } from 'react'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./components/ui/card"
+import { Button } from "./components/ui/button"
+import { Input } from "./components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select"
+import { Newspaper, RefreshCcw, Loader2 } from "lucide-react"
+
+const fetchNews = async (page = 1, searchTerm = '', category = '') => {
+  const response = await fetch(`/api/news?page=${page}&q=${encodeURIComponent(searchTerm)}&category=${category}`)
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to fetch news')
+  }
+
+  return data
+}
+
+const categories = [
+  { value: 'world', label: 'World' },
+  { value: 'politics', label: 'Politics' },
+  { value: 'business', label: 'Business' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'science', label: 'Science' },
+  { value: 'sport', label: 'Sport' },
+  { value: 'media', label: 'Media' },
+  {value:'culture', label: 'Culture'},
+  {value:'lifeandstyle', label: 'Lifeandstyle'},
+  {value:'education', label: 'Education'},
+  {value:'music', label: 'Music'},
+]
 
 export default function Home() {
+  const [news, setNews] = useState<{
+    title: ReactNode
+    date: ReactNode
+    category: ReactNode
+    image: any
+    description: ReactNode
+    url(url: any, arg1: string): string, id: string 
+}[]>([])
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [category, setCategory] = useState('all')
+
+  const loadNews = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { articles, currentPage, totalPages } = await fetchNews(page, searchTerm, category)
+      setNews(articles)
+      setPage(currentPage)
+      setTotalPages(totalPages)
+    } catch (error) {
+      console.error('Error fetching news:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [page, searchTerm, category])
+
+  useEffect(() => {
+    loadNews()
+  }, [loadNews])
+
+  const handleSearch = (e: { target: { value: SetStateAction<string> } }) => {
+    setSearchTerm(e.target.value)
+    setPage(1)
+  }
+
+  const handleCategoryChange = (value: SetStateAction<string>) => {
+    setCategory(value)
+    setPage(1)
+  }
+
+  const handleRefresh = () => {
+    setPage(1)
+    loadNews()
+  }
+
+  const handlePageChange = (newPage: SetStateAction<number>) => {
+    setPage(newPage)
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="min-h-screen bg-black-100 p-4">
+      <header className="mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-2">WorldWire</h1>
+        <p className="text-white-600">Stay updated with the latest news from The Guardian</p>
+      </header>
+
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="flex gap-4 mb-4">
+          <Input 
+            type="search" 
+            placeholder="Search news..." 
+            className="flex-grow text-black" 
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+          <Select value={category} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Category"/>
+            </SelectTrigger>
+            <SelectContent className='bg-black'>
+              {categories.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleRefresh} disabled={loading}>
+            <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
+          </Button>
         </div>
+
+        {loading ? (
+          <div className="text-center mt-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            <p>Loading news...</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {news.map((article) => (
+                <Card key={article.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{article.title}</CardTitle>
+                    <CardDescription>{article.date} - {article.category}</CardDescription>
+                  </CardHeader>
+                  {article.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={article.image} alt={article.title?.toString() ?? ''} className="w-full h-48 object-cover" />
+                  )}
+                  <CardContent>
+                    <p className="text-sm">{article.description}</p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" onClick={() => window.open(article.url as unknown as string, '_blank')}>
+                      Read More
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex justify-center mt-8 gap-2">
+              <Button 
+                onClick={() => handlePageChange(page - 1)} 
+                disabled={page === 1 || loading}
+              >
+                Previous
+              </Button>
+              <span className="self-center">
+                Page {page} of {totalPages}
+              </span>
+              <Button 
+                onClick={() => handlePageChange(page + 1)} 
+                disabled={page === totalPages || loading}
+              >
+                Next
+              </Button>
+            </div>
+          </>
+        )}
+
+        {news.length === 0 && !loading && (
+          <p className="text-center mt-4 text-gray-500">No news found. Try a different search term or category.</p>
+        )}
       </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+      <footer className="text-center text-gray-500">
+        <p>&copy; 2023 WorldWire. All rights reserved.</p>
+      </footer>
+    </div>
+  )
 }
