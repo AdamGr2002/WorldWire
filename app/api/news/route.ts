@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const API_KEY = process.env.GUARDIAN_API_KEY
+const API_KEY = process.env.NEXT_PUBLIC_GUARDIAN_API_KEY
 const API_URL = 'https://content.guardianapis.com/search'
 
 export async function GET(request: Request) {
@@ -42,9 +42,22 @@ export async function GET(request: Request) {
       articles,
       currentPage: data.response.currentPage,
       totalPages: data.response.pages
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
     })
   } catch (error) {
     console.error('Error fetching news:', error)
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch news' }, { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    })
   }
 }
