@@ -89,6 +89,21 @@ export default function Home() {
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-bold mb-2">WorldWire</h1>
         <p className="text-white-600">Stay updated with the latest news from The Guardian</p>
+        <p className="text-white-400">Please choose a news section below</p>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 mx-auto"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
       </header>
 
       <div className="max-w-6xl mx-auto mb-8">
@@ -103,6 +118,7 @@ export default function Home() {
           <Select value={category} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Category"/>
+              <Newspaper className="ml-2 h-4 w-4" />
             </SelectTrigger>
             <SelectContent className='bg-black'>
               {categories.map((cat) => (
